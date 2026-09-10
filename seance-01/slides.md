@@ -21,11 +21,40 @@ Non-intégré &rarr; évaluations séparées
   - 2. Exercices guidés : 1h30
     - Projet fil rouge
     - Exercices complémentaires
+- Enseignants : Tony Leclercq, Jérôme Plumat, Sébastien Strebelle
+
+---
+
+# BINV2150-A - Javascript avancé : matériel
+
+- Slides PDF et code fourni pour les exercices sur moodle
+- Slides interactifs sur GitHub (VSCode + slidev)
+  - https://github.com/e-vinci/BINV2150A-slides 
+  - Lisez le README pour savoir comment les utiliser
+  - Plus utile pour copier-coller des exemples de code ou interagir avec les slides
+- Solutions des exercices sur GitHub (VSCode)
+  - https://github.com/e-vinci/BINV2150A-exercises
+  - Pas de solutions disponibles sans vos contributions
+- Contributions des étudiants
+  - Pour les slides et pour les solutions d'exercices
+  - Contributions via Pull Request sur GitHub
+  - Points bonus en fonction de la qualité des contributions (0.5 pour une solution d'exercice classique)
+  - Maximum 4 points bonus pour l'ensemble du cours
+
+---
+
+# BINV2150-A - Javascript avancé : évaluation
+
 - Évaluation : examen écrit uniquement
   - Conception d'un site web complet (front + back) en 2h
   - Évaluation fonctionnelle uniquement, pas de notation sur le code
   - Examen blanc à la fin du cours pour se préparer
-- Enseignants : Tony Leclercq, Jérôme Plumat, Sébastien Strebelle
+- Mêmes modalités en première et en deuxième session
+- Note de l'acap : examen écrit + bonus pour contributions
+- Note de l'UE : 80%  pour BINV2150-A, 20% pour BINV2150-B
+
+
+
 
 ---
 
