@@ -9,6 +9,7 @@ title: Web 2 - Séance 03 - Authentification par JWT
 ---
 
 # Authentification vs Autorisation
+##
 
 **Authentification** : Qui es-tu ? (vérifier l'identité)
 - L'utilisateur se connecte avec email + mot de passe
@@ -33,21 +34,41 @@ title: Web 2 - Séance 03 - Authentification par JWT
 
 ---
 
+# Le « fake token » du boilerplate vs JWT
+
+Le boilerplate (comme Web 1) génère un token maison :
+
+```ts
+export const generateFakeToken = (email: string) => Buffer.from(email, "utf-8").toString("base64");
+export const validateFakeToken = (token: string) => Buffer.from(token, "base64").toString("utf-8");
+```
+
+| | Fake token | JWT |
+|---|---|---|
+| Contenu | l'email encodé en Base64 | ce qu'on veut inclure |
+| Falsifiable | **oui** : `btoa("admin@miam.be")` suffit | **non** : signé avec une clé secrète connue du serveur seul |
+| Expiration | jamais | `exp` intégré au token |
+| Vérification | recherche l'utilisateur en BDD à chaque requête | vérification de la signature, sans accès BDD |
+
+&rarr; Même principe (un texte envoyé à chaque requête), mais le JWT est **vérifiable** et **autoporteur**.
+
+---
+
 # Structure d'un JWT
 
 - Un token est un texte structuré avec 3 parties : `header.payload.signature`
 
 ```
 eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
-eyJpZCI6MSwiZW1haWwiOiJqb2huQGdtYWlsLmNvbSIsImlhdCI6MTYzNzUxMjAwMH0.
-wH_FkWR5qf3nGTr5eH4rJ2k8nL9oP3qR2sT1uV6wX7y
+eyJpZCI6MSwiZW1haWwiOiJqb2huQGdtYWlsLmNvbSIsInJvbGUiOiJ1c2VyIiwiaWF0IjoxNjM3NTEyMDAwLCJleHAiOjE2Mzc1OTg0MDB9.
+79-zRXtICRfQFrMPWKb2GEo6A7DVEj-udz-g34KUp9Q
 ```
 
 - **Header** : type de token et algorithme de signature
 - **Payload** : données utilisateur (id, email, etc.)
 - **Signature** : preuve d'authenticité
 
-Chaque partie est encodée en Base64 <br>
+Chaque partie est encodée en Base64URL (variante de Base64 sans `+`, `/` ni `=`) <br>
 &rarr; N'importe qui peut décoder le token et voir le contenu <br>
 https://jwt.io ou https://www.base64decode.org
 
@@ -82,10 +103,11 @@ Librairie à utiliser : `jsonwebtoken`
 
 ```ts
 // npm install jsonwebtoken
+// npm install --save-dev @types/jsonwebtoken
 import jwt from "jsonwebtoken";
 
-// Clé secrète pour signer le token (à garder confidentielle)
-const SECRET_KEY = "votre_clé_secrète_très_longue";
+// Clé secrète pour signer le token (à garder confidentielle, voir slide suivant)
+const SECRET_KEY = process.env.JWT_SECRET!;
 
 // Informations identifiant l'utilisateur
 // Stockées dans le payload du token
@@ -95,6 +117,28 @@ interface TokenPayload {
   role: "user" | "admin";
 }
 ```
+
+---
+
+# Clé secrète : variable d'environnement
+
+La clé secrète ne doit **jamais** être écrite dans le code (ni dans Git) <br> Quiconque la connaît peut fabriquer des tokens valides.
+
+Le boilerplate lance déjà le serveur avec `tsx --env-file=env/dev.env` : le fichier `env/dev.env` contient les variables d'environnement.
+
+```bash
+# env/dev.env
+PORT=3000
+JWT_SECRET=une_longue_chaine_aleatoire_de_32_caracteres_minimum
+```
+
+```ts
+// Lecture dans le code : process.env.NOM_DE_LA_VARIABLE (string | undefined)
+const SECRET_KEY = process.env.JWT_SECRET!;
+```
+
+- Chaque environnement (dev, test, prod) a son propre fichier et sa propre clé
+- Le fichier `env/dev.env` du boilerplate est fourni ; en pratique, on l'ajoute au `.gitignore`
 
 ---
 
@@ -142,7 +186,7 @@ Que contient ce token une fois décodé ?
   "email": "john@gmail.com",
   "role": "user",
   "iat": 1637512000, // iat = issued at (quand créé)
-  "exp": 1638116800  // exp = expiration time (quand expire)
+  "exp": 1637598400  // exp = expiration time (quand expire, ici iat + 1 jour)
 }
 ```
 
@@ -181,20 +225,25 @@ if (payload) {
 Vérifier le token avant d'accéder à une route protégée.
 
 ```ts
+// Request étendue avec l'utilisateur authentifié (payload du token)
+export interface AuthenticatedRequest extends Request {
+  user?: TokenPayload;
+}
+
 export class AuthService {
-  static authorize(req: Request, res: Response, next: NextFunction) {
+  static authorize(req: AuthenticatedRequest, res: Response, next: NextFunction) {
     const token = req.get("Authorization");
     if (!token) return res.sendStatus(401);
 
     const payload = verifyToken(token);
-
     if (!payload) return res.sendStatus(401);
 
-    req.user = payload;
+    req.user = payload; // disponible dans les middlewares et routes suivants
     next();
   }
 
-  static isAdmin(req: Request, res: Response, next: NextFunction) {
+  static isAdmin(req: AuthenticatedRequest, res: Response, next: NextFunction) {
+    if (!req.user) return res.sendStatus(401);
     if (req.user.role !== "admin") return res.sendStatus(403);
     next();
   }
@@ -208,22 +257,25 @@ export class AuthService {
 Utiliser le middleware pour protéger les routes.
 
 ```ts
-export const recipesController = Router();
-
-recipesController.get("/:id", AuthService.authorize, (req: AuthenticatedRequest, res: Response) => {
+recipesController.put("/:id", AuthService.authorize, (req: AuthenticatedRequest, res: Response) => {
   const recipeId = parseInt(req.params.id);
   const recipe = RecipesService.getRecipeById(recipeId);
   if (!recipe) return res.sendStatus(404);
 
-  // Vérifier si l'utilisateur a le droit de voir la recette
-  if (recipe.userId !== req.user.id && req.user.role !== "admin") {
+  // Vérifier si l'utilisateur a le droit de modifier la recette : auteur ou admin
+  // (req.user est forcément défini ici : le middleware authorize a répondu 401 sinon)
+  if (recipe.authorId !== req.user!.id && req.user!.role !== "admin") {
     return res.sendStatus(403); // Forbidden
   }
 
-  res.json(recipe);
+  RecipesService.updateRecipe(recipeId, req.body);
+  res.sendStatus(204);
 });
 
-recipesController.delete("/:id", AuthService.authorize, AuthService.isAdmin, (req, res) => {
+recipesController.delete("/:id", AuthService.authorize, AuthService.isAdmin, (req: Request, res: Response) => {
+  const recipeId = parseInt(req.params.id);
+  if (!RecipesService.getRecipeById(recipeId)) return res.sendStatus(404);
+
   RecipesService.deleteRecipe(recipeId);
   res.sendStatus(204);
 });
@@ -237,8 +289,11 @@ Vérifie les identifiants et génère un JWT si correct.
 
 ```ts
 authController.post("/login", (req: Request, res: Response) => {
-  const { email, password } = req.body;
-  const user = UsersService.findByEmail(email);
+  const body: unknown = req.body;
+  if (!isCredentialsDTO(body)) return res.sendStatus(400); // type guard, cf. S01
+
+  const { email, password } = body;
+  const user = UsersService.getByEmail(email);
   if (!user || user.password !== password) { // pas sécurisé, hachage à voir en séance 04
     return res.sendStatus(401);
   }
@@ -261,7 +316,7 @@ Permet de tester les routes protégées avec un token.
 
 ```http
 ### Login
-# @name = login
+# @name login
 POST http://localhost:3000/auth/login
 Content-Type: application/json
 

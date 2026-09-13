@@ -33,7 +33,7 @@ Non-intégré &rarr; évaluations séparées
   - Lisez le README pour savoir comment les utiliser
   - Plus utile pour copier-coller des exemples de code ou interagir avec les slides
 - Solutions des exercices sur GitHub (VSCode)
-  - https://github.com/e-vinci/BINV2150A-exercises
+  - https://github.com/e-vinci/BINV2150A-exercices
   - Pas de solutions disponibles sans vos contributions
 - Contributions des étudiants
   - Pour les slides et pour les solutions d'exercices
@@ -53,14 +53,11 @@ Non-intégré &rarr; évaluations séparées
 - Note de l'acap : examen écrit + bonus pour contributions
 - Note de l'UE : 80%  pour BINV2150-A, 20% pour BINV2150-B
 
-
-
-
 ---
 
 # Plan du cours
 
-- **Partie 1 — Backend (S01-S04)** : extensions TypeScript, promesses/async, API REST, JWT, sécurité
+- **Partie 1 — Backend (S01-S04)** : extensions TypeScript, API REST et documentation, JWT, hachage et promesses/async
 - **Partie 2 — Frontend "old school" (S05-S06)** : DOM, querySelector, événements
 - **Partie 3 — React (S07-S20)** : composants, props, état, routage, context, useEffect, architecture MVVM
 - **Partie 4 — Liaison front-back (S21-S24)** : fetch, CORS/proxy, session, requêtes authentifiées
@@ -147,10 +144,10 @@ const recipe1: Recipe = { title: "Cookies" };
 const recipe2: Recipe = { title: "Pancakes", author: "Alice" };
 
 // ❌ Erreur TypeScript : author peut être undefined
-const name = recipe1.author.toUpperCase();
+const name1 = recipe1.author.toUpperCase();
 
 // ✅ Assertion : "je sais que c'est défini"
-const name = recipe2.author!.toUpperCase();
+const name2 = recipe2.author!.toUpperCase();
 
 // À utiliser avec prudence ! Vérifiez vraiment.
 ```
@@ -197,7 +194,7 @@ copy.title = "Muffins";
 console.log(copy); // { title: "Muffins", servings: 12 } - modifié
 console.log(recipe1); // { title: "Cookies", servings: 12 } — inchangé
 
-// ATENTION : les objets imbriqués ne sont pas copiés en profondeur (shallow copy)
+// ATTENTION : les objets imbriqués ne sont pas copiés en profondeur (shallow copy)
 const copyWithTags = { ...recipe2 };
 copyWithTags.tags?.push("chocolate");
 console.log(copyWithTags); // { title: "Brownies", servings: 8, tags: ["dessert", "chocolate"] } - modifié
@@ -257,6 +254,7 @@ interface Ingredient {
   name: string;
   quantity: number;
   unit: string;
+  temperature?: number;
 }
 
 const ingredient: Ingredient = { name: "farine", quantity: 200, unit: "g" };

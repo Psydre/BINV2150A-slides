@@ -24,7 +24,7 @@ const users = [
 ];
 ```
 
-Si la BDD est hacke, tous les mots de passe sont compromis. <br>
+Si la BDD est piratée, tous les mots de passe sont compromis. <br>
 Et si l'utilisateur réutilise ce mot de passe ailleurs... catastrophe !
 
 À la place, on stocke un **hash** du mot de passe, pas le mot de passe lui-même.
@@ -40,7 +40,7 @@ interface User {
 
 # Hachage vs Chiffrement
 
-- **Chiffrement (symmétrique)** : Un texte **chiffré** avec une clé secrète peut être **déchiffré** avec la même clé.
+- **Chiffrement (symétrique)** : Un texte **chiffré** avec une clé secrète peut être **déchiffré** avec la même clé.
 - **Hachage** : Un texte **haché** avec un algorithme ne peut pas être **déchiffré**. C'est unidirectionnel.
   - On peut cependant comparer un texte avec son hash pour vérifier si c'est le même.
 
@@ -55,7 +55,7 @@ hash = H(entrée)
 - **Irréversibilité** : on ne peut pas retrouver l'entrée à partir du hash
 - **Déterminisme** : même entrée → même hash
 - **Chaotique** : petit changement dans l'entrée → hash complètement différent
-- **Calculatoire** : pour ralentir les attaques par force brute
+- **Coûteux en calcul** : volontairement lent, pour ralentir les attaques par force brute
 
 ---
 
@@ -90,7 +90,7 @@ BCrypt fait tout automatiquement :
 - Hache plusieurs fois (le "cost")
   - Coût = nombre de tours de hachage
   - Augmente le temps de calcul pour ralentir les attaques par force brute
-  - cost=10 &rightarrow; ~100ms, cost=12 &rightarrow; ~1s
+  - Chaque +1 double le temps : cost=10 &rightarrow; ~100ms, cost=12 &rightarrow; ~400ms
 - Retourne salt + hash en un seul string
 
 ---
@@ -133,7 +133,7 @@ Une fonction asynchrone retourne une **Promise**.
   1. **Pending** : en attente, pas encore résolue
   2. **Fulfilled** : résolue avec succès, valeur disponible
   3. **Rejected** : rejetée avec une erreur, valeur non disponible
-- Le résultat d'une Promise peut être récupéré des **callbacks**
+- Le résultat d'une Promise est récupéré via des **callbacks**
   - **then()** : pour gérer le succès
   - **catch()** : pour gérer l'erreur
 
@@ -174,8 +174,8 @@ function hashPassword(plainPassword: string, callback: (hash: string | null) => 
 Autre syntaxe pour gérer les Promises qui est plus lisible et évite les callbacks imbriqués : `async/await`
 
 - Une fonction déclarée avec `async` :
-  - S'exécute de manière asynchrone, en arrière-plan
   - Retourne automatiquement une Promise
+  - Peut utiliser `await` dans son corps
 - Le mot-clé `await` :
   - Peut être utilisé uniquement dans une fonction `async`
   - Permet d'attendre la résolution d'une fonction asynchrone (Promise) avant de continuer l'exécution du code
@@ -205,7 +205,7 @@ async function hashPassword(plainPassword: string): Promise<string> {
   return hash;
 }
 
-// Exemple
+// Exemple (await doit être dans une fonction async)
 const password = "MySecretPassword123!";
 const hash = await hashPassword(password);
 console.log(hash);
@@ -225,7 +225,7 @@ async function verifyPassword(plainPassword: string, storedHash: string): Promis
   return isMatch;
 }
 
-// Exemple
+// Exemple (await doit être dans une fonction async)
 const userPassword = "MySecretPassword123!";
 const storedHash = "$2b$10$N9qo8uLOickgx2ZMRZoMyeIjZAgcg7b3XeKeU6xBJxvxaXUtSQm1S";
 
@@ -241,21 +241,21 @@ console.log(isWrong); // false
 # Route d'Inscription avec bcrypt
 
 ```ts
-app.post("/auth/register", async (req: Request, res: Response) => {
+authController.post("/register", async (req: Request, res: Response) => {
     const body: unknown = req.body;
-    if (!isCredentials(body)) return res.sendStatus(400); // Bad Request
+    if (!isCredentialsDTO(body)) return res.sendStatus(400); // Bad Request
 
     const { email, password } = body;
 
     // Vérifier email pas déjà utilisé
-    const existingUser = getUserByEmail(email);
+    const existingUser = UsersService.getByEmail(email);
     if (existingUser) return res.sendStatus(409); // Conflict
 
     // Hacher le mot de passe
     const passwordHash = await bcrypt.hash(password, 10);
 
     // Sauvegarder l'utilisateur
-    const user = createUser({ email, passwordHash, role: "user" });
+    const user = UsersService.create({ email, passwordHash, role: "user" });
 
     // Créer un token
     const token = generateToken({ id: user.id, email: user.email, role: user.role });
@@ -269,13 +269,13 @@ app.post("/auth/register", async (req: Request, res: Response) => {
 # Route de Connexion avec bcrypt
 
 ```ts
-app.post("/auth/login", async (req: Request, res: Response) => {
+authController.post("/login", async (req: Request, res: Response) => {
     const body: unknown = req.body;
-    if (!isCredentials(body)) return res.sendStatus(400); // Bad Request
+    if (!isCredentialsDTO(body)) return res.sendStatus(400); // Bad Request
 
     const { email, password } = body;
 
-    const user = getUserByEmail(email);
+    const user = UsersService.getByEmail(email);
     if (!user) return res.sendStatus(401); // Unauthorized
 
     const isPasswordValid = await bcrypt.compare(password, user.passwordHash);
@@ -294,7 +294,7 @@ app.post("/auth/login", async (req: Request, res: Response) => {
 
 ```http
 ### 1. Register (créer un compte)
-# @name = register
+# @name register
 POST /auth/register
 Content-Type: application/json
 
@@ -303,12 +303,14 @@ Content-Type: application/json
   "password": "MySecurePassword123!"
 }
 
-### Serveur hache le mot de passe avec bcrypt
-### Stocke : user{ email, passwordHash: "$2b$10$..." }
-### Retourne : { token: "eyJh..." }
+### 
 
-### 2. Client stocke le token
-````
+# Serveur hache le mot de passe avec bcrypt
+# Stocke : user{ email, passwordHash: "$2b$10$..." }
+# Retourne : { token: "eyJh..." }
+
+# 2. Client stocke le token
+```
 
 ---
 
@@ -316,7 +318,7 @@ Content-Type: application/json
 
 ```http
 ### 3. Login (se connecter)
-# @name = login
+# @name login
 POST /auth/login
 Content-Type: application/json
 
@@ -325,11 +327,13 @@ Content-Type: application/json
   "password": "MySecurePassword123!"
 }
 
-### Serveur compare password avec bcrypt.compare()
-### Génère nouveau token
-### Retourne : { token: "eyJh..." }
+###
 
-### 4. Client stocke le token
+# Serveur compare password avec bcrypt.compare()
+# Génère nouveau token
+# Retourne : { token: "eyJh..." }
+
+# 4. Client stocke le token
 ```
 
 ---
@@ -341,17 +345,18 @@ Content-Type: application/json
 GET /recipes
 Authorization: {{login.response.body.token}}
 
-### Middleware vérifie le token
-### Retourne : [...recipes]
+# Middleware vérifie le token
+# Retourne : [...recipes]
 
 ### 6. Suppression protégée
 DELETE /recipes/5
 Authorization: {{login.response.body.token}}
 
-// Middleware vérifie le token
-// Route vérifie autorisation (est-ce l'auteur ?)
-// Supprime
+# Middleware vérifie le token
+# Route vérifie autorisation (est-ce l'auteur ?)
+# Supprime
 ```
+
 ---
 
 # Récapitulatif Séance 04

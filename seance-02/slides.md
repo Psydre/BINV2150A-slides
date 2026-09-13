@@ -34,7 +34,7 @@ GET /recipes/5         // Recette avec id=5
 POST /recipes          // Créer une nouvelle recette
 // Body: { title: "Pancakes", servings: 4 }
 
-// PUT : modifier complètement une ressource complète
+// PUT : remplacer complètement une ressource
 PUT /recipes/5         // Remplacer la recette 5
 // Body: { title: "Pancakes", servings: 6 }
 
@@ -130,7 +130,7 @@ Content-Type: application/json
 Il est possible de réaliser des tests d'API avancés avec REST Client, en utilisant des variables et des scripts.
 
 ```http
-### Récupérer toutes les recettes
+### Créer une nouvelle recette
 # @name createRecipe
 POST http://localhost:3000/recipes
 Content-Type: application/json
@@ -181,7 +181,7 @@ app.get('/recipes', (req, res) => {
 /**
  * @route POST /recipes
  * @summary Crée une nouvelle recette
- * @param {NewRecipe} (body) - Nouvelle recette à créer
+ * @param {NewRecipe} (body) recipe - Nouvelle recette à créer
  * @returns {Recipe} 201 - Recette créée avec son ID
  * @returns 409 - Une recette avec le même titre existe déjà
  */
@@ -195,8 +195,8 @@ app.get('/recipes', (req, res) => {
 /**
  * @route PUT /recipes/:id
  * @summary Met à jour une recette existante
- * @param {id} (path) - ID de la recette à mettre à jour
- * @param {Recipe} (body) - Recette à mettre à jour
+ * @param {number} (path) id - ID de la recette à mettre à jour
+ * @param {Recipe} (body) recipe - Recette à mettre à jour
  * @returns 204 - Recette mise à jour
  * @returns 404 - Recette non trouvée
  */
@@ -205,8 +205,8 @@ app.get('/recipes', (req, res) => {
 /**
  * @route DELETE /recipes/:id
  * @summary Supprime une recette existante
- * @param {id} (path) - ID de la recette à supprimer
- * @param {token} (header) - Token d'authentification JWT
+ * @param {number} (path) id - ID de la recette à supprimer
+ * @param {string} (header) Authorization - Token d'authentification JWT
  * @returns 204 - Recette supprimée
  * @returns 401 - Non authentifié
  * @returns 403 - Non autorisé
@@ -333,8 +333,8 @@ paths:
           description: Recette non trouvée
     delete:
       summary: Supprime une recette existante
-      authentication:
-        - jwt: [admin]
+      security:
+        - tokenAuth: []   # Token JWT, utilisateurs administrateurs
       parameters:
         - name: id
           in: path
@@ -351,6 +351,11 @@ paths:
         '404':
           description: Recette non trouvée
 components:
+  securitySchemes:
+    tokenAuth:
+      type: apiKey
+      in: header
+      name: Authorization   # token JWT brut, sans préfixe Bearer
   schemas:
     Recipe:
       type: object
@@ -398,5 +403,3 @@ components:
 - Dans le backend du projet MiamMiam, créez un fichier `README.md` pour documenter l'API REST.
 - Documentez l'entièreté des routes existantes
 - **Optionnel** : Créez un fichier `openapi.yaml` pour documenter l'API REST avec OpenAPI (Swagger).
-
-
