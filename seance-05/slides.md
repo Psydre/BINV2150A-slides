@@ -1,0 +1,339 @@
+---
+theme: default
+title: Web 2 - Séance 05 - Query Selector
+---
+
+# Web 2 — Séance 05
+## Query Selector
+
+---
+
+# Partie 2 : Frontend "old school"
+##
+
+- **Backend** = serveur, manipule les données
+- **Frontend** = client, définit l'interface utilisateur
+
+Old school : HTML + CSS + JS dans le navigateur, sans framework. <br>
+Le JavaScript permet de rendre la page dynamique et interactive.
+
+---
+
+# Le DOM (Document Object Model)
+
+Le DOM est une représentation en arbre de votre HTML
+
+```html
+<html>
+  <body>
+    <div id="app">
+      <h1>MiamMiam</h1>
+      <div class="recipe-card">
+        <h2>Pâtes Carbonara</h2>
+      </div>
+    </div>
+  </body>
+</html>
+```
+
+**JavaScript peut accéder et modifier chaque nœud :**
+- Lire les propriétés
+- Modifier le contenu
+- Ajouter/Supprimer des éléments
+- Écouter les événements
+
+---
+
+# JavaScript dans le navigateur
+
+- Le navigateur est capable d'exécuter du JavaScript (pas du TypeScript!)
+- Le code JS peut être inclus dans la page HTML avec `<script>` ou chargé depuis un fichier externe
+- Le code JS est exécuté **après le chargement du DOM** (dans `<body>` ou avec `defer` dans `<head>`)
+
+```html
+<script src="script.js"></script>
+<script>
+  console.log("Hello world!");
+</script>
+```
+
+JavaScript VS TypeScript :
+- Pas de typage statique
+- Pas de compilation
+- Pas de modules (import/export)
+
+Le code JS est exécuté **dans le navigateur**, pas sur le serveur Node.js. <br>
+&rarr; la console se trouve dans les outils de développement du navigateur (F12).
+
+---
+
+# document.querySelector()
+
+Sélectionner **un seul** élément
+
+```js
+// Par ID
+const app = document.querySelector('#app');
+
+// Par classe
+const card = document.querySelector('.recipe-card');
+
+// Par tag
+const titre = document.querySelector('h1');
+
+// Sélecteur CSS complexe
+const firstRecipe = document.querySelector('div.recipe-card > h2');
+
+// Par attribut
+const input = document.querySelector('input[type="email"]');
+```
+
+**Retourne:** l'élément trouvé ou `null`
+
+---
+
+# document.querySelectorAll()
+
+Sélectionner **plusieurs** éléments
+
+```js
+// Toutes les cartes de recettes
+const cards = document.querySelectorAll('.recipe-card');
+
+// Tous les h2 dans les cartes
+const titles = document.querySelectorAll('.recipe-card h2');
+
+// Tous les boutons
+const buttons = document.querySelectorAll('button');
+```
+
+**Retourne:** une `NodeList` (pas un Array!)
+
+```js
+// Parcourir une NodeList
+cards.forEach(card => {
+  console.log(card.textContent);
+});
+
+// Convertir en Array si nécessaire
+const cardsArray = Array.from(cards);
+```
+
+---
+
+# Lire les propriétés des éléments
+
+```js
+const card = document.querySelector('.recipe-card');
+
+// textContent: le texte uniquement
+console.log(card.textContent); // "Pâtes Carbonara"
+
+// innerHTML: le HTML à l'intérieur
+console.log(card.innerHTML); // "<h2>Pâtes Carbonara</h2><p>..."
+
+// value: pour inputs, selects, textarea
+const input = document.querySelector('input');
+console.log(input.value); // "ma recherche"
+
+// classList: les classes de l'élément
+console.log(card.classList); // DOMTokenList
+console.log(card.classList.contains('favorite')); // true/false
+
+// Attributs
+console.log(card.getAttribute('data-id')); // "123"
+console.log(card.id); // lecture directe
+console.log(card.className); // lecture directe
+```
+
+---
+
+# Modifier les éléments
+
+```js
+const card = document.querySelector('.recipe-card');
+
+// Modifier le texte
+card.textContent = 'Nouilles Carbonara';
+
+// Modifier le HTML (attention: danger XSS!)
+card.innerHTML = '<h2>Pâtes Carbonara</h2><p>5 min</p>';
+
+// Ajouter une classe
+card.classList.add('favorite');
+
+// Retirer une classe
+card.classList.remove('favorite');
+
+// Basculer une classe
+card.classList.toggle('favorite');
+
+// Modifier le style inline
+card.style.backgroundColor = '#ffeb3b';
+card.style.padding = '20px';
+card.style.display = 'none';
+
+// Modifier un attribut
+card.setAttribute('data-likes', '42');
+```
+
+---
+
+# Créer des éléments
+
+```js
+// Créer un nouvel élément
+const newCard = document.createElement('div');
+newCard.className = 'recipe-card';
+
+// Lui donner du contenu
+newCard.textContent = 'Pâtes à la Bolognaise';
+
+// Ou avec du HTML
+newCard.innerHTML = `
+  <h2>Pâtes à la Bolognaise</h2>
+  <p>Préparation: 30 min</p>
+  <button>Ajouter</button>
+`;
+
+// Définir des attributs
+newCard.setAttribute('data-id', '456');
+newCard.style.borderRadius = '8px';
+```
+
+Attention: l'élément existe en mémoire mais **pas encore dans la page!**
+
+---
+
+# Ajouter au DOM
+
+```js
+const newCard = document.createElement('div');
+newCard.innerHTML = '<h2>Risotto</h2>';
+
+const container = document.querySelector('#recipes-container');
+
+// appendChild: ajoute en dernier enfant
+container.appendChild(newCard);
+
+// append: ajoute en dernier (supporte plusieurs éléments)
+container.append(newCard);
+container.append(newCard, 'texte additionnel');
+
+// insertBefore: insère avant un élément référence
+const firstCard = document.querySelector('.recipe-card');
+container.insertBefore(newCard, firstCard);
+```
+
+Après ces méthodes, l'élément est **visible dans la page!**
+
+---
+
+# Supprimer des éléments
+
+```js
+const card = document.querySelector('.recipe-card');
+
+// Méthode moderne: remove()
+card.remove();
+
+// Méthode classique: removeChild()
+const parent = card.parentElement;
+parent.removeChild(card);
+```
+
+---
+
+# Exemple: Afficher une liste de recettes
+
+```js
+const recipes = [
+  { id: 1, title: 'Pâtes Carbonara', duration: 15 },
+  { id: 2, title: 'Risotto', duration: 30 },
+  { id: 3, title: 'Soupe Gratinée', duration: 45 }
+];
+
+const container = document.querySelector('#recipes');
+
+recipes.forEach(recipe => {
+  const card = document.createElement('div');
+  card.className = 'recipe-card';
+
+  card.innerHTML = `
+    <h2>${recipe.title}</h2>
+    <p>⏱️ ${recipe.duration} min</p>
+    <button data-recipe-id="${recipe.id}">Voir</button>
+  `;
+
+  container.appendChild(card);
+});
+```
+
+Résultat: 3 cartes de recettes dans la page!
+
+---
+
+# Template Literals pour HTML
+
+```js
+const recipe = { title: 'Pâtes', duration: 15, rating: 4.5 };
+
+const html = `
+  <div class="recipe-card">
+    <h2>${recipe.title}</h2>
+    <p>⏱️ ${recipe.duration} min</p>
+    <p>⭐ ${recipe.rating}/5</p>
+  </div>
+`;
+
+document.querySelector('#app').innerHTML = html;
+```
+
+**Attention au XSS (Cross-Site Scripting):**
+
+```js
+// DANGER! Si recipe.title vient d'un utilisateur
+const malicious = '<img src=x onerror="alert(\'hack\')">';
+const html = `<h2>${malicious}</h2>`; // Script exécuté!
+
+// Solution: utiliser textContent pour les données utilisateur
+const card = document.createElement('div');
+card.textContent = malicious; // Affiché littéralement, pas exécuté
+```
+
+Utilisez `innerHTML` pour le HTML structuré, `textContent` pour les données potentiellement dangereuses.
+
+---
+
+# Récapitulatif
+
+| Opération | Méthode |
+|-----------|---------|
+| Sélectionner un | `querySelector()` |
+| Sélectionner plusieurs | `querySelectorAll()` |
+| Créer un élément | `createElement()` |
+| Ajouter au DOM | `appendChild()`, `append()` |
+| Supprimer | `remove()`, `removeChild()` |
+
+---
+
+# Récapitulatif (suite)
+
+| Opération | Méthode |
+|-----------|---------|
+| Lire texte | `textContent` |
+| Lire/modifier HTML | `innerHTML` |
+| Modifier classes | `classList.add/remove/toggle()` |
+| Modifier style | `style.property = value` |
+
+**Prochaine séance** : Séance 06 — Gestion d'événements (click, input, submit...)
+
+---
+
+# Exercice complémentaire 01
+
+- Téléchargez la page HTML de la séance 05 sur moodle et placez-là dans votre dossier de cours
+- Créez un fichier `script.js` et liez-le à la page HTML
+- Dans `script.js`, faites en sorte d'afficher dans la console la valeur du titre h1
+- Faites ensuite en sorte de modifier le texte du titre h2 avec le texte "Recette modifiée"
+- Ajoutez un nouveau paragraphe `<p>` avec le texte "Temps de préparation: 30 min" en bas de la page
