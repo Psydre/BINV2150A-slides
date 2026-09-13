@@ -22,7 +22,7 @@ title: Web 2 - Séance 06 - Gestion d'événements
 - `click`: clic de souris
 - `submit`: envoi d'un formulaire
 - `input`: changement dans un input (au fur et à mesure)
-- `change`: changement dans un input (à la fin)
+- `change`: valeur validée (perte de focus ou Entrée pour un champ texte, immédiat pour select/checkbox)
 - `keydown`: touche enfoncée
 - `keyup`: touche relâchée
 - `mouseover`, `mouseout`: souris entre/sort d'un élément
@@ -55,32 +55,25 @@ button.addEventListener('click', (event) => {
 
 ```html
 <div id="outer">
-  <div id="inner">
-    <button id="my-button">Cliquez-moi</button>
-  </div>
+  <button id="my-button">Cliquez-moi</button>
 </div>
-
 ```
 
 ```js
 const outer = document.querySelector('#outer');
 
 outer.addEventListener('click', (event) => {
-  // event.target: l'élément qui a déclenché l'événement
-  console.log(event.target.value); // button
+  // event.target: l'élément qui a déclenché l'événement (celui qui a été cliqué)
+  console.log(event.target.id); // "my-button"
 
   // event.currentTarget: l'élément sur lequel on a mis le listener
-  console.log(event.currentTarget.value); // outer
+  console.log(event.currentTarget.id); // "outer"
 
   // Autres propriétés
-  console.log(event.type); // "input"
-  console.log(event.timeStamp); // millisecondes
+  console.log(event.type); // "click"
+  console.log(event.timeStamp); // millisecondes depuis le chargement de la page
 });
 ```
-
----
-
-# Objet Event (suite)
 
 ```js
 document.addEventListener('keydown', (event) => {
@@ -208,7 +201,7 @@ list.addEventListener('click', (event) => {
 ```html
 <div class="recipe-card" data-id="42">
   <h2>Pâtes Carbonara</h2>
-  <button class="favorite-btn">❤️ Ajouter aux favoris</button>
+  <button class="favorite-btn">🤍 Ajouter aux favoris</button>
 </div>
 ```
 
@@ -244,7 +237,7 @@ cards.forEach(card => {
 ```
 
 ```js
-const recipes = [...];
+const recipes = [{ id: 1, title: 'Carbonara' }, { id: 2, title: 'Risotto' }, { id: 3, title: 'Soupe' }];
 
 const searchInput = document.querySelector('#search');
 const listContainer = document.querySelector('#recipes-list');
@@ -280,18 +273,15 @@ searchInput.addEventListener('input', (event) => renderRecipes(event.target.valu
 | Sélectionner plusieurs | `querySelectorAll()` + `forEach()` |
 | Event delegation | Listener sur parent + check `target` |
 
-**Vanilla JS + DOM API = flexible mais verbose**
-**React = plus déclaratif et plus facile à maintenir**
-
 **Prochaine séance** : Séance 07 — Projet Vite et composant React 🚀
 
 ---
 
 # Exercice complémentaire 02
 
-- Téléchargez la page HTML de la séance 06 sur moodle et placez-là dans votre dossier de cours
-- Créez un fichier `script.js` et liez-le à la page HTML
-- Dans `script.js`, implémentez la fonctionnalité suivante :
-  - Quand on clique sur le bouton "Ajouter une recette", un formulaire apparaît dans le conteneur #add-recipe, avec les champs "Titre" et "Durée"
-  - Quand on soumet le formulaire, la recette est ajoutée à la liste des recettes du conteneur #recipes-list, et le formulaire disparaît du conteneur #add-recipe
-  - **Optionnel** : Chaque recette dans la liste a un bouton "Supprimer" qui permet de la retirer de la liste
+1. Téléchargez la page HTML de la séance 06 sur moodle et placez-la dans votre dossier de cours
+2. Créez un fichier `script.js` et liez-le à la page HTML
+3. Quand on clique sur le bouton "Ajouter une recette", un formulaire apparaît dans le conteneur `#add-recipe`, avec les champs "Titre" et "Durée" et un bouton de soumission
+4. Quand on soumet le formulaire, la recette est ajoutée à la liste du conteneur `#recipes-list` (même structure que les cartes existantes) et le formulaire disparaît de `#add-recipe`
+5. **Optionnel** : le bouton "Supprimer" de chaque carte retire la carte de la liste — y compris pour les recettes ajoutées après le chargement de la page (pensez à l'event delegation)
+6. **Optionnel** : le champ `#search` filtre les cartes affichées à chaque frappe (masquer les cartes dont le titre ne contient pas le texte recherché)

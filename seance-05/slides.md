@@ -48,7 +48,7 @@ Le DOM est une représentation en arbre de votre HTML
 
 - Le navigateur est capable d'exécuter du JavaScript (pas du TypeScript!)
 - Le code JS peut être inclus dans la page HTML avec `<script>` ou chargé depuis un fichier externe
-- Le code JS est exécuté **après le chargement du DOM** (dans `<body>` ou avec `defer` dans `<head>`)
+- Le code JS doit s'exécuter **après le chargement du DOM** : `<script>` en fin de `<body>`, ou dans `<head>` avec l'attribut `defer`
 
 ```html
 <script src="script.js"></script>
@@ -58,9 +58,8 @@ Le DOM est une représentation en arbre de votre HTML
 ```
 
 JavaScript VS TypeScript :
-- Pas de typage statique
-- Pas de compilation
-- Pas de modules (import/export)
+- Pas de typage statique, pas d'interfaces
+- Pas de compilation : le fichier est exécuté tel quel
 
 Le code JS est exécuté **dans le navigateur**, pas sur le serveur Node.js. <br>
 &rarr; la console se trouve dans les outils de développement du navigateur (F12).
@@ -142,6 +141,7 @@ console.log(card.classList.contains('favorite')); // true/false
 
 // Attributs
 console.log(card.getAttribute('data-id')); // "123"
+console.log(card.dataset.id); // "123" — raccourci pour les attributs data-*
 console.log(card.id); // lecture directe
 console.log(card.className); // lecture directe
 ```
@@ -216,9 +216,9 @@ const container = document.querySelector('#recipes-container');
 // appendChild: ajoute en dernier enfant
 container.appendChild(newCard);
 
-// append: ajoute en dernier (supporte plusieurs éléments)
-container.append(newCard);
+// append: ajoute en dernier (supporte plusieurs éléments et du texte)
 container.append(newCard, 'texte additionnel');
+// Un élément n'est jamais à deux endroits : l'ajouter ailleurs le déplace
 
 // insertBefore: insère avant un élément référence
 const firstCard = document.querySelector('.recipe-card');
@@ -294,7 +294,7 @@ document.querySelector('#app').innerHTML = html;
 ```js
 // DANGER! Si recipe.title vient d'un utilisateur
 const malicious = '<img src=x onerror="alert(\'hack\')">';
-const html = `<h2>${malicious}</h2>`; // Script exécuté!
+document.querySelector('#app').innerHTML = `<h2>${malicious}</h2>`; // Script exécuté!
 
 // Solution: utiliser textContent pour les données utilisateur
 const card = document.createElement('div');
@@ -332,8 +332,11 @@ Utilisez `innerHTML` pour le HTML structuré, `textContent` pour les données po
 
 # Exercice complémentaire 01
 
-- Téléchargez la page HTML de la séance 05 sur moodle et placez-là dans votre dossier de cours
-- Créez un fichier `script.js` et liez-le à la page HTML
-- Dans `script.js`, faites en sorte d'afficher dans la console la valeur du titre h1
-- Faites ensuite en sorte de modifier le texte du titre h2 avec le texte "Recette modifiée"
-- Ajoutez un nouveau paragraphe `<p>` avec le texte "Temps de préparation: 30 min" en bas de la page
+1. Téléchargez la page HTML de la séance 05 sur moodle et placez-la dans votre dossier de cours
+2. Créez un fichier `script.js` et liez-le à la page HTML
+3. Dans `script.js`, affichez dans la console le texte du titre `h1`
+4. Modifiez le texte du titre `h2` en "Recette modifiée"
+5. Ajoutez un nouveau paragraphe `<p>` avec le texte "Temps de préparation : 30 min" à la fin de la carte de recette
+6. Déclarez un tableau `recipes` de 4 recettes (`id`, `title`, `duration`) et affichez une carte (`div.recipe-card`) par recette dans le conteneur `#recipes` : titre, durée et un bouton "Voir" portant l'id de la recette dans un attribut `data-id`
+7. Affichez le nombre de recettes dans l'élément `#count`
+8. **Optionnel** : ajoutez une classe `quick` aux cartes dont la durée est inférieure ou égale à 20 minutes (regardez le CSS de la page)
