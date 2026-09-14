@@ -70,12 +70,38 @@ Non-intégré &rarr; évaluations séparées
 # Web 2 — Séance 01
 ## Extensions TypeScript
 
+- Programmation fonctionnelle
 - Optional Chaining `?.`
 - Nullish Coalescing `??`
 - Non-null Assertion `!`
 - Spread Operator `...`
 - Destructuring
 - Type Guard
+
+---
+
+# Programmation fonctionnelle
+
+Paradigme de programmation qui privilégie les fonctions pures, l'immuabilité et l'absence d'effets de bord.
+
+- Variables immuables (const) plutôt que mutables (let)
+- Fonctions pures : mêmes entrées → mêmes sorties, pas d'effets de bord
+- Fonctions d'ordre supérieur : fonctions qui prennent des fonctions en argument ou retournent des fonctions
+- Composition de fonctions : combiner des fonctions pour créer de nouvelles fonctions
+
+```ts
+const numbers = [1, 2, 3, 4, 5];
+// Fonction pure : ne modifie pas le tableau original
+const doubled = numbers.map(n => n * 2); // [2, 4, 6, 8, 10]
+const even = numbers.filter(n => n % 2 === 0); // [2, 4]
+// Composition de fonctions : combiner map et filter
+const doubledEven = numbers.filter(n => n % 2 === 0).map(n => n * 2); // [4, 8]
+// Fonction d'ordre supérieur : prend une fonction en argument
+function applyToAll(arr: number[], fn: (n: number) => number): number[] {
+  return arr.map(fn);
+}
+const squared = applyToAll(numbers, n => n * n); // [1, 4, 9, 16, 25]
+```
 
 ---
 
@@ -292,32 +318,6 @@ function printIngredient({ name, quantity, unit }: Ingredient) {
 
 ---
 
-# Destructuring : Tableaux
-
-Extraire les éléments d'un tableau avec positionnement.
-
-```ts
-const ingredients = ["farine", "sucre", "oeufs"];
-
-// Extraction simple
-const [first, second] = ingredients;
-console.log(first); // "farine"
-
-// Ignorer des éléments
-const [main, , third] = ingredients;
-console.log(main, third); // "farine", "oeufs"
-
-// Avec valeur par défaut
-const [a, b, c, d = "sel"] = ingredients;
-console.log(d); // "sel"
-
-// Rest operator
-const [primary, ...rest] = ingredients;
-console.log(rest); // ["sucre", "oeufs"]
-```
-
----
-
 # Type guard
 
 Vérifier le type d'une variable pour affiner le type dans un bloc de code.
@@ -409,6 +409,8 @@ function isRecipe(obj: any): obj is Recipe {
 ---
 
 # Récapitulatif Séance 01
+
+- **Programmation fonctionnelle** — Fonctions pures, immuabilité, fonctions d'ordre supérieur, composition
 
 - **Optional Chaining `?.`** — Accès sûr aux propriétés optionnelles
 
